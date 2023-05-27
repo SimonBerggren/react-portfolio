@@ -1,4 +1,4 @@
-import React, { useEffect, useRef } from "react";
+import React, { useCallback, useEffect, useRef, useState } from "react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faEnvelope } from "@fortawesome/free-solid-svg-icons";
 import {
@@ -32,16 +32,31 @@ const socials = [
   },
 ];
 
+let oldScrollY;
+
 const Header = () => {
+  const [hidden, setHidden] = useState(false);
+
+  const handleScroll = useCallback(() => {
+    setHidden(oldScrollY - window.scrollY < 0);
+    oldScrollY = window.scrollY;
+  }, []);
+
+  useEffect(() => {
+    oldScrollY = window.scrollY;
+    window.addEventListener("scroll", handleScroll);
+    return () => {
+      window.removeEventListener("scroll", handleScroll);
+    };
+  }, []);
+
   const handleClick = (anchor) => () => {
     const id = `${anchor}-section`;
     const element = document.getElementById(id);
     if (element) {
-      element.scrollIntoView({
-        behavior: "smooth",
-        block: "start",
-      });
+      window.scrollTo({ top: element.offsetTop, behavior: "smooth" });
     }
+    return false;
   };
 
   return (
@@ -50,11 +65,11 @@ const Header = () => {
       top={0}
       left={0}
       right={0}
-      translateY={0}
       transitionProperty="transform"
       transitionDuration=".3s"
       transitionTimingFunction="ease-in-out"
       backgroundColor="#18181b"
+      style={{ transform: `translateY(${hidden ? -200 : 0}px)` }}
     >
       <Box color="white" maxWidth="1280px" margin="0 auto">
         <HStack
@@ -64,11 +79,20 @@ const Header = () => {
           alignItems="center"
         >
           <nav>
-            {/* Add social media links based on the `socials` data */}
+            {socials.map(({ icon, url }, index) => (
+              <a key={index} style={{ marginRight: "1.5rem" }} href={url}>
+                <FontAwesomeIcon icon={icon} size="2x" />
+              </a>
+            ))}
           </nav>
           <nav>
             <HStack spacing={8}>
-              {/* Add links to Projects and Contact me section */}
+              <a href="/#projects" onClick={handleClick("projects")}>
+                Projects
+              </a>
+              <a href="/#contact-me" onClick={handleClick("contactme")}>
+                Contact me
+              </a>
             </HStack>
           </nav>
         </HStack>
